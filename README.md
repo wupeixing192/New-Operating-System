@@ -31,7 +31,7 @@ For example: RedLeaf OS, Tock OS, herkos, Asterinas Starburst.
 
 The true originality of the framework for this new operating system, which combines "alloy" and "purification" of technology, lies in the clever "alloy style" fusion of the three concepts with the core logic of "Rust language security". Let them be mutually causal, forming a logically rigorous and mutually reinforcing organic whole. If projects like RedLeaf are about "transforming existing houses with tools," then this new operating system is like "reinventing a stronger and lighter building material from scratch to build houses. At the same time, the framework achieves philosophical purification of thought experiments. For example, Unikernel typically runs on top of a virtual machine and relies on the hypervisor for isolation. The goal of this operating system is to run directly on bare metal and rely entirely on the Rust compiler to ensure the isolation of its internal components, which is like creating a "pure software virtual machine" environment with almost zero performance loss.
 
-# 宣言/Declaration:：
+# 宣言/Declaration:
 
 内核必须原生支持基于VT-d的GPU直通能力，向用户态提供GPU能力令牌，而非显卡抽象层。图形性能不得低于裸机水平的95%。
 
