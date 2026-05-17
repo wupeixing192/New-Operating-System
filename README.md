@@ -36,12 +36,11 @@ The true originality of the framework for this new operating system, which combi
 
 **本操作系统处于早期开发阶段。**
 
-任何人都可以为该操作系统编写**非内核功能**（例如兼容驱动、文件系统支持、网络栈、用户态应用等）。**内核本身由项目创始人独立编写与维护，不接受外部贡献。**
-
+任何人都可以为该操作系统编写**非内核功能**（例如兼容驱动、网络栈、键‑值对象存储服务、发布‑订阅通道模块、用户态应用等）。**内核本身由项目创始人独立编写与维护，不接受外部贡献。**
 
 **This operating system is in an early development stage.**
 
-Anyone is welcome to contribute **non-kernel functionality** (e.g., driver compatibility, filesystem support, network stack, user-space applications, etc.). **The kernel itself is written and maintained exclusively by the project founder. External contributions to the kernel are not accepted.**
+Anyone is welcome to contribute **non-kernel functionality** (e.g., driver compatibility, network stack, key‑value object storage services, pub‑sub channel modules, user‑space applications, etc.). **The kernel itself is written and maintained exclusively by the project founder. External contributions to the kernel are not accepted.**
 
 # 宣言/Declaration:
 
