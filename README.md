@@ -7,6 +7,7 @@ A new type of operating system not based on Linux, with a completely new archite
 
 3. 能力授权引擎：不具伪造性的令牌作为一切资源访问的唯一凭证。这不只是安全，它重新定义了“程序”与“权限”的关系——不是谁拥有更多权限，而是谁能证明它应该被允许。
 
+
 1. Thoroughly unify addressing: map all resources to a 64 bit address space. This eliminates countless instances of data replication between the kernel and user space, memory and storage.
 
 2. Language is like a firewall: using Rust's compile time check instead of MMU hardware isolation. This means extremely lightweight context switching and groundbreaking security in implementation.
