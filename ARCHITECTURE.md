@@ -33,12 +33,10 @@ The architecture and core design of this project are defined by the founder. All
 
 贡献前须知 / Before You Contribute
 
-1. 阅读 `ARCHITECTURE.md`（如果有）以理解设计哲学。
-1. Read the `ARCHITECTURE.md` (if available) to understand the design philosophy.
-2. 在提交 Pull Request 前，先开 Issue 讨论重大修改。
-2. Open an Issue to discuss major changes before submitting a Pull Request.
-3. 保持贡献的专注和最小化。
-3. Keep contributions focused and minimal.
+1. 在提交 Pull Request 前，先开 Issue 讨论重大修改。
+1. Open an Issue to discuss major changes before submitting a Pull Request.
+2. 保持贡献的专注和最小化。
+2. Keep contributions focused and minimal.
 
 许可证 / License
 
