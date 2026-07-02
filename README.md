@@ -1,3 +1,12 @@
+# 新型操作系统 · 原子回路令牌验证（基于 bootloader）
+
+> 本项目基于 Rust 官方 [`bootloader`](https://github.com/rust-osdev/bootloader) 项目修改，用于验证新型操作系统的核心机制——64位原子回路令牌验证。
+
+## 我们的修改
+- 在 `examples/basic` 中添加了能力令牌（Capability Token）验证逻辑
+- 实现了 64 位地址空间下的统一编址测试
+- 验证了原子回路在裸机环境下的可行性
+
 # 新型操作系统/New-Operating-System
 A new type of operating system not based on Linux, with a completely new architecture, using Rust as its core.
 
