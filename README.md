@@ -7,6 +7,8 @@ You are free to pick any module and implement its functionality according to the
 ---
 
 ## 目录结构 · Directory Structure
+
+```text
 功能-Function/
 ├── 键值存储服务-Key-Value Storage Service/
 │ ├── 接口-interface/ # 由你定义 trait 和类型 / Define your trait and types here
@@ -25,9 +27,8 @@ You are free to pick any module and implement its functionality according to the
 │ └── ...（同上）
 └── 看护服务-Care services/
 └── ...（同上）
-
-text
-
+```
+---
 每个模块都分为两个部分：  
 Each module is divided into two parts:
 
@@ -56,14 +57,15 @@ pub trait StorageService {
     fn read_object(&mut self, id: u64) -> Result<Vec<u8>, &'static str>;
     // ...
 }
+```
 接口应保持稳定，因为其他模块会依赖它。
 Keep the interface stable, as other modules will depend on it.
 
-3. 实现功能 · Implement the Functionality
+### 3. 实现功能 · Implement the Functionality
 进入 主内容-Main Content/ 目录，在 src/lib.rs 中实现你的 trait。你可以引用接口文件夹中的定义（已在 Cargo.toml 中配置好路径）。
 Go to the 主内容-Main Content/ folder, implement your trait in src/lib.rs. You can reference the definitions from the interface folder (the path is already configured in Cargo.toml).
 
-rust
+```rust
 use storage_interface::StorageService;
 
 pub struct MyStorage {
@@ -73,11 +75,12 @@ pub struct MyStorage {
 impl StorageService for MyStorage {
     // 实现所有方法 / Implement all methods
 }
-4. 本地测试 · Test Locally
+```
+### 4. 本地测试 · Test Locally
 在主文件夹内执行 cargo build 确保编译通过。你可以添加单元测试和示例代码。
 Run cargo build inside the main folder to ensure it compiles. You may add unit tests and example code.
 
-5. 提交代码 · Submit Your Code
+### 5. 提交代码 · Submit Your Code
 完成实现后，提交 Pull Request（PR）到 main 分支。PR 中请简要说明你实现的功能和接口设计。
 After finishing, submit a Pull Request (PR) to the main branch. Briefly describe the functionality you implemented and your interface design in the PR.
 
@@ -98,7 +101,7 @@ Code style: Please use the official Rust style (cargo fmt).
 
 Communication: If you are unsure about an interface design, feel free to discuss it in the group.
 
-常见问题 · FAQ
+## 常见问题 · FAQ
 Q: 我可以同时开发多个模块吗？
 Can I work on multiple modules at the same time?
 A: 当然可以，但建议先完成一个，再开始下一个，以便集中精力。
@@ -114,5 +117,5 @@ Why does the main folder’s Cargo.toml reference ../接口-interface as a relat
 A: 这样便于本地开发时直接引用接口定义，同时未来可以迁移为独立 crate。
 A: This allows local development to directly reference the interface definitions, and in the future it can be migrated to an independent crate.
 
-欢迎加入开发！如有任何问题，请在 QQ 频道或 GitHub Issues 中提出。
+## 欢迎加入开发！如有任何问题，请在 QQ 频道或 GitHub Issues 中提出。
 Welcome to the development! For any questions, please ask in the QQ channel or GitHub Issues.
