@@ -1,0 +1,11 @@
+[package]
+name = "storage-memory"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# 引用接口定义
+storage-interface = { path = "../接口文件夹" }
+
+[lib]
+crate-type = ["lib"]
