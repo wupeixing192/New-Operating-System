@@ -118,4 +118,4 @@ A: 这样便于本地开发时直接引用接口定义，同时未来可以迁�
 A: This allows local development to directly reference the interface definitions, and in the future it can be migrated to an independent crate.
 
 ## 欢迎加入开发！如有任何问题，请在 QQ 频道或 GitHub Issues 中提出。
-Welcome to the development! For any questions, please ask in the QQ channel or GitHub Issues.
+## Welcome to the development! For any questions, please ask in the QQ channel or GitHub Issues.
