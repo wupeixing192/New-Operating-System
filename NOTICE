@@ -1,1 +1,136 @@
+新型操作系统
+Copyright (C) 2026-2027 新型操作系统开发者团队
+SPDX-License-Identifier: GPL-3.0-or-later
+
+This project is licensed under the GNU General Public License v3.0 or later.
+See LICENSE for the full license text.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
+
+----------------------------------------------------------------------
+
+版权声明 / Copyright Notice
+
+本项目的所有源代码（除明确标注为第三方组件的代码外）的著作权
+归"新型操作系统开发者团队"所有。
+
+The copyright of all source code in this project (except where explicitly
+marked as third-party components) is held by the "New OS Developer Team".
+
+每个源文件头部的版权声明格式如下：
+
+    // Copyright (C) 2026-2027 新型操作系统开发者团队
+    // SPDX-License-Identifier: GPL-3.0-or-later
+
+年份说明：
+- 起始年为项目首次公开发布年份（2026）
+- 结束年为当前年份（2027），每年滚动更新
+- 如项目中断一年以上未发布新版本，结束年停在上一个发布年份
+
+----------------------------------------------------------------------
+
+许可证选择说明 / License Choice
+
+本项目采用 GPL-3.0-or-later，即：
+- 下游用户可按 GPLv3 使用，也可按任何更高版本（如未来 FSF 发布的 GPLv4）使用
+- 此决策记录于 2026 年 7 月
+- 后续如需更改，需征得所有已提交贡献者的同意
+
+本许可证选择的核心考量：
+- 优势：未来 FSF 发布 GPLv4 时，若包含必要的安全或合规修正，项目可自动适配
+- 风险：GPLv4 可能新增义务（如更强的反 DRM、出口管制条款）
+- 决策理由：本项目作为基础设施型操作系统，长期可维护性优先
+
+----------------------------------------------------------------------
+
+贡献者须知 / For Contributors
+
+向本项目提交代码即表示你同意以下条款：
+
+1. 你拥有提交该代码的合法权利
+2. 你同意将其按 GPL-3.0-or-later 授权
+3. 你了解该代码将被公开分发
+4. 你保留对所提交代码的著作权
+5. 你授予本项目及其用户非独占的、全球性的、无版税的专利许可
+
+本项目当前采用 DCO（Developer Certificate of Origin）机制。
+每次提交必须包含 Signed-off-by 行：
+
+    Signed-off-by: Your Name <your.email@example.com>
+
+DCO 完整文本：https://developercertificate.org/
+
+注：当前阶段采用轻量级 DCO 机制。若项目未来进入企业级贡献阶段，
+将考虑引入正式的 CLA（Contributor License Agreement）。
+
+----------------------------------------------------------------------
+
+第三方组件声明 / Third-Party Components
+
+本项目可能包含或依赖以下第三方组件，其许可证与 GPL-3.0-or-later
+兼容。完整列表及版本信息将在构建产物中一并附带。
+
+[如有第三方依赖，请按以下格式补充]
+
+格式示例：
+- [组件名] - [版本] - [原始作者/组织] - [许可证类型] - [项目地址]
+
+已知兼容许可证：
+- MIT              ：兼容，可合入本项目
+- BSD (2-clause/3-clause) ：兼容，可合入本项目
+- Apache-2.0       ：FSF 确认与 GPLv3 兼容，可合入本项目
+- GPL-3.0 / GPL-3.0-or-later ：兼容（相同许可证）
+
+需要单独评估：
+- GPL-2.0-only     ：与 GPLv3 存在条款差异，需单独评估兼容性
+
+不兼容（不得合入开源版本）：
+- 商业/专有许可证
+
+如发现依赖项许可证与本许可证不兼容，请立即通过项目 Issue 或
+QQ 频道联系项目团队。
+
+----------------------------------------------------------------------
+
+专利声明 / Patent Notice
+
+根据 GPLv3 第 11 条，每个贡献者均授予用户非独占的、全球性的、
+无版税的专利许可，涵盖其贡献相关的专利。
+
+本项目保留对独立研发部分的先用权抗辩权利。
+
+----------------------------------------------------------------------
+
+免责声明 / Disclaimer
+
+本文件仅供项目参与者参考，不构成正式法律意见。
+如有具体法律问题，请咨询具有相关领域执业资格的律师。
+
+核心法律依据：
+- 《计算机软件保护条例》第十四条：软件著作权自开发完成之日起自动产生
+- 《专利法》第七十五条：先用权抗辩
+- 《著作权法》：计算机软件作为作品受著作权法保护
+- GPLv3 第 11 条：专利授权条款
+- （2021）最高法知民终 51 号：开源义务与著作权独立性
+- 罗盒公司诉玩友公司案：GPLv3 为附解除条件的著作权合同
+
+----------------------------------------------------------------------
+
+联系方式 / Contact
+
+- GitHub Issues ：https://github.com/wupeixing192/New-Operating-System
+/issues
+- QQ 频道       ：RenMinSystem64
+
+欢迎通过 Issue 或 QQ 频道与项目团队沟通。
+
+----------------------------------------------------------------------
+
+© 2026-2027 新型操作系统开发者团队 · GPL-3.0-or-later
+
 
