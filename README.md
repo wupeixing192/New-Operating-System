@@ -64,4 +64,3 @@ The kernel must natively support GPU pass through capabilities based on VT-d, pr
 This system will never introduce POSIX semantics. Any behavior that bypasses the ability token and directly operates on physical addresses is considered a fundamental breach of the system security model.
 
 The system startup time (from pressing the power button to being interactive) shall not exceed 3 seconds. Application installation cannot modify the global state, and an independent sandbox is implemented through key value object storage. The system update uses atomic substitution and never forces a restart.
->>>>>>> 27d372b613fa270f660ae95298d578a03720215f
