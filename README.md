@@ -107,13 +107,3 @@ Please submit these contributions via **branches**. The main branch only contain
 - This system will never introduce POSIX semantics. Any behavior that bypasses capability tokens and directly operates on physical addresses is considered a fundamental breach of the system security model.
 
 - System startup time (from power‑on to interactive) shall not exceed 3 seconds. Application installation must not modify global state; independent sandboxing is achieved through key‑value object storage. System updates use atomic replacement and never force a restart.
-
----
-
-## 链接 / Links
-
-- [GitHub 仓库 / Repository](https://github.com/wupeixing192/New-Operating-System)
-- [Gitee 镜像 / Mirror](https://gitee.com/wupeixing192/New-Operating-System)
-- [技术宪法 / Technical Constitution](docs/宪法.md)
-- [开发文档 / Development Docs](docs/)
-- [数学证明 / Mathematical Proofs](docs/proofs/)
