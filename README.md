@@ -2,7 +2,7 @@
 # 新型冯·诺依曼内核  
 New Von Neumann Kernel
 
-> 用新架构定义了一个宇宙。  
+> 用新架构定义了一个新宇宙。  
 > Define a universe with a new architecture.
 
 ---
@@ -67,14 +67,16 @@ The kernel is minimal: it only creates, verifies, and revokes capability tokens.
 **下一步计划：**  
 **Next steps:**
 
-- 抢占式多任务（定时器中断调度）  
-- Preemptive multitasking (timer interrupt scheduling)
 - Ring 3 用户态切换  
 - Ring 3 user-mode transition
 - WASI 兼容层  
 - WASI compatibility layer
 - 键值存储服务（用户态）  
 - Key-value store service (user space)
+- 桌面
+- Desktop
+- 硬件代码
+- hardware code
 
 ---
 
@@ -166,8 +168,8 @@ This software is provided "as is", without warranty of any kind. The author is n
 ## 联系方式  
 ## Contact
 
-- GitHub 仓库 / Repository：[https://github.com/wupeixing192/New-Operating-System](https://github.com/wupeixing192/New-Operating-System)  
 - 作者 / Author：wupeixing
+- 邮箱 / Email : 367125693@qq.com
 
 ---
 
