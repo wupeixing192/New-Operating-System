@@ -149,6 +149,54 @@ The project uses hierarchical key management:
    ```bash
    qemu-system-x86_64 -bios /usr/share/ovmf/OVMF.fd -kernel target/x86_64-unknown-uefi/debug/my_uefi_kernel.efi -serial stdio -no-reboot -no-shutdown
    ```
+
+---
+
+## 注意事项
+## Notes
+
+# 本新型内核的已知问题 / Known issues of this new kernel
+
+- **任务池数量上限**：在src/main.rs内核文件中，第57行：/ **Task pool limit**: In the core file src/main.rs, line 57:
+   ```rust
+   pub const MAX_TASKS_PER_CORE: usize = 10;  // 每个 CPU 核心最多可容纳的任务（执行上下文）数量
+   ```
+   BDFL在编写与调试这个内核中，**发现调到64,甚至32在终端都没有输出，很有可能的原因是栈溢出**
+   While writing and debugging this kernel, the BDFL **found that adjusting it to 64, or even 32, produced no output in the terminal, and the most likely reason is a stack overflow**.
+
+  在：系统4，时间分配调度器这一部分中，位于第493行：/ In: System 4, the time-sharing scheduler section, at line 493:
+  
+  ```rust
+  const STACK_SIZE: usize = 4096 * 2; // 每个任务的栈大小（4 KiB）
+  ```
+  
+  BDFL不断修改此值，**发现如果数字过大，可能出现以下情况**：/ BDFL keeps changing this value and **found that if the number is too large, the following might happen**:
+  
+  ```bash
+  BdsDxe: failed to load Boot0001 "UEFI Non-Block Boot Device" from VenMedia(1428F772-B64A-441E-B8C3-9EBDD7F893C7): Not Found
+
+  >>Start PXE over IPv4.
+  ```
+  
+  **原因：/ Reason:**
+  **为了减小 PE 文件的静态数据，让 OVMF 能加载。**/**To reduce the static data of the PE file so that OVMF can load it.**
+  BDFL最初的配置：/ The original setup of the BDFL:
+  PerCoreData 里有 task_pool: [Option<Task>; MAX_TASKS_PER_CORE]，而 Task 里有 stack: [u8; STACK_SIZE]。
+  In PerCoreData, there's task_pool: [Option<Task>; MAX_TASKS_PER_CORE], and Task has stack: [u8; STACK_SIZE].
+  静态数据计算：/ Static data calculation:
+  · 每个任务栈 = 16KB / Each task stack = 16KB
+  · 每核心 64 个任务 = 64 × 16KB = 1MB / 64 tasks per core = 64 × 16KB = 1MB
+  · 256 核心 = 256 × 1MB = 256MB / 256 cores = 256 × 1MB = 256MB
+  · 加上 AP_STACKS、BITMAP、HEAP 等，总计 > 260MB / Including AP_STACKS, BITMAP, HEAP, etc., the total is over 260MB
+  **OVMF 加载 PE 文件时，必须预留整个 SizeOfImage 的虚拟地址空间。260MB 超过了固件启动阶段的可用内存，导致 Out of Resources。**
+  **When OVMF loads a PE file, it must reserve the entire virtual address space of SizeOfImage. 260MB exceeds the available memory during the firmware boot stage, causing an Out of Resources error.**
+  **把 STACK_SIZE 从 16KB 改成 8KB，每核心任务池从 1MB 降到 512KB，总静态数据大幅减小，PE 文件才能被 OVMF 加载。**
+  **Change STACK_SIZE from 16KB to 8KB, reduce each core task pool from 1MB to 512KB, and the total static data will shrink a lot so that the PE file can be loaded by OVMF.**
+
+- **关于密钥 / About the key**
+
+  **BDFL决定：当键值存储开发为可用时，将根密钥描定于内核，与键值存储形成一个完整的信任链 / BDFL decided: when the key-value store becomes available, the root key will be hard-coded into the kernel, forming a complete chain of trust with the key-value store.**
+
 ---
 
 ## 法律声明  
@@ -192,3 +240,5 @@ This software is provided "as is", without warranty of any kind. The author is n
 - **Immutable Root of Trust**: The minimal trust root fused in system ROM, responsible for verifying the kernel signature; it is the absolute starting point of the trust chain.
 - **MPK 影子墙**：用 Intel MPK 硬件特性为不安全 C 代码提供硬件级隔离兜底，防止内存越界。  
 - **MPK Shadow Wall**: Using Intel MPK hardware features to provide hardware-level isolation fallback for unsafe C code, preventing memory overruns.
+
+## 2026新型操作系统开发团队 / New Operating System Development Team
