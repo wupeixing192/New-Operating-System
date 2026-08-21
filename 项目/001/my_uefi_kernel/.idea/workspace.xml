@@ -3,19 +3,6 @@
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="ALL" />
   </component>
-  <component name="CargoProjects">
-    <cargoProject FILE="$PROJECT_DIR$/Cargo.toml">
-      <package file="$PROJECT_DIR$">
-        <feature name="default" enabled="true" />
-        <feature name="multicore" enabled="true" />
-      </package>
-    </cargoProject>
-    <cargoProject FILE="$PROJECT_DIR$/software/b_software/Cargo.toml">
-      <package file="$PROJECT_DIR$/software/b_software">
-        <feature name="default" enabled="true" />
-      </package>
-    </cargoProject>
-  </component>
   <component name="ChangeListManager">
     <list default="true" id="97b57d84-4a08-41e2-b4c6-80f55a6493f0" name="更改" comment="" />
     <option name="SHOW_DIALOG" value="false" />
