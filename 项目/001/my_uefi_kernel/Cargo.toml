@@ -1,0 +1,28 @@
+[package]
+name = "my_uefi_kernel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+uefi = { version = "0.31.0", default-features = false, features = ["logger"] }
+uefi-macros = "0.17.0"
+x86_64 = "0.15.5"
+uart_16550 = "0.2.19"
+spin = "0.9.8"
+log = "0.4"
+crossbeam-queue = "0.3.11"
+linked_list_allocator = "0.10.6"
+
+a_software = { path = "software/a_software" }
+b_software = { path = "software/b_software" }
+
+[profile.dev]
+panic = "abort"
+opt-level = 1
+
+[profile.release]
+panic = "abort"
+
+[features]
+default = []   # 默认单核
+multicore = [] # 启用多核
