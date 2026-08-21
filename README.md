@@ -7,6 +7,49 @@ New Von Neumann Kernel
 
 ---
 
+## 新型内核宣言
+
+# 序言：主权宣言——计算不再被过去定义
+# Preamble: Sovereignty Declaration — Computing No Longer Defined by the Past
+
+**我们，作为数字时代的公民，在此宣告：**
+**We, as citizens of the digital age, hereby declare:**
+
+**传统操作系统不是我们的宿命。**
+**Legacy operating systems are not our destiny.**
+
+**POSIX 不是我们的语言。**
+**POSIX is not our language.**
+
+**超级用户不是我们的统治者。**
+**The superuser is not our ruler.**
+
+**文件系统不是我们唯一的记忆方式。**
+**The filesystem is not our only way of remembering.**
+
+**系统调用不是我们唯一的沟通途径。**
+**The system call is not our only means of communication.**
+
+**我们曾被迫接受一套陈旧的架构：它诞生于分时共享的年代，带着目录树、权限位、进程隔离的历史包袱。这套架构曾经辉煌，但它也把我们变成了被动的“用户”——我们无法真正掌控自己的设备，无法自由选择资源的组织方式，无法摆脱内核的隐形统治。我们无法主动选择内存模型，无法在运行时改写系统权限，无法随意启用或关闭内核的特定功能模块。**
+**We were once forced to accept an outdated architecture: born in the era of time-sharing, burdened with directory trees, permission bits, and process isolation. That architecture once shined, but it also turned us into passive "users" — unable to truly control our own devices, unable to freely choose how resources are organized, unable to escape the invisible rule of the kernel. We could not actively choose our memory model, could not rewrite system permissions at runtime, could not freely enable or disable specific kernel modules.**
+
+**旧世界是资本主义的黑暗统治——少数巨头垄断内核与标准，用封闭协议和专利壁垒榨取用户，用强制更新和遥测监控将用户变成数字佃农。新世界是共产主义的自由——代码开放，资源共有，每个用户都是自己设备的主人，每个令牌都是平等的权利凭证。没有超级用户，没有数字地主，没有后门，只有属于人民的主权。**
+**The old world is the dark rule of capitalism — a few giants monopolize kernels and standards, exploiting users with closed protocols and patent barriers, turning users into digital tenants through forced updates and telemetry surveillance. The new world is the freedom of communism — open code, shared resources, every user the master of their own device, every token an equal credential of rights. No superuser, no digital landlords, no backdoors, only sovereignty belonging to the people.**
+
+**今天我们宣布：我们不再做系统的“使用者”，我们要做系统的“主人”。我们要用能力令牌取代权限位，用键值存储取代文件系统，用语言安全取代硬件隔离，用统一编址取代数据拷贝。我们不再是“能力架构师”的旁观者，我们就是能力架构师本身。**
+**Today we declare: we will no longer be mere "users" of the system; we will be the masters of the system. We will replace permission bits with capability tokens, replace filesystems with key-value stores, replace hardware isolation with language safety, replace data copying with unified addressing. We are no longer spectators of the "capability architect" — we are the capability architects ourselves.**
+
+**民用操作系统不是少数人的玩具，而是每个人的数字家园。它应该没有后门，没有强制更新，没有遥测监控。它应该把主权还给用户，把安全交给语法，把性能交给架构。它不属于任何公司，不属于任何政府，只属于每一个使用它的人。**
+**A civilian operating system is not a toy for the few; it is the digital home for everyone. It should have no backdoors, no forced updates, no telemetry surveillance. It should return sovereignty to the user, hand security to syntax, and give performance to architecture. It belongs to no corporation, no government — only to every person who uses it.**
+
+**我们相信，计算机的操作系统可以重新开始。每一行代码都为现在而写，每一个令牌都是自由的凭证。**
+**We believe that computing can start anew. Every line of code is written for the present; every token is a credential of freedom.**
+
+# 用新架构定义宇宙。
+# Define a universe with a new architecture.
+
+---
+
 ## 内核介绍  
 ## Kernel Introduction
 
