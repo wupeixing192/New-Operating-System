@@ -75,13 +75,13 @@ At the same time, the framework achieves philosophical purification of thought e
 
 ## 贡献指南 / Contribution Guidelines
 
-### 🔒 内核 / The Kernel
+### 内核 / The Kernel
 
 **内核本身由项目创始人独立编写与维护，任何人可以提出建议，但建议由BDFL决定**
 
 **The kernel itself is independently written and maintained by the project founder. Anyone can make suggestions, but the final call on suggestions is up to the BDFL.**
 
-### 🧩 非内核功能 / Non‑Kernel Functionality
+### 非内核功能 / Non‑Kernel Functionality
 
 **任何人都可以为该操作系统编写非内核功能**，例如：
 
