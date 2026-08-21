@@ -179,17 +179,27 @@ The project uses hierarchical key management:
   ```
   
   **原因：/ Reason:**
+  
   **为了减小 PE 文件的静态数据，让 OVMF 能加载。**/**To reduce the static data of the PE file so that OVMF can load it.**
+  
   BDFL最初的配置：/ The original setup of the BDFL:
+  
   PerCoreData 里有 task_pool: [Option<Task>; MAX_TASKS_PER_CORE]，而 Task 里有 stack: [u8; STACK_SIZE]。
   In PerCoreData, there's task_pool: [Option<Task>; MAX_TASKS_PER_CORE], and Task has stack: [u8; STACK_SIZE].
+
   静态数据计算：/ Static data calculation:
+  
   · 每个任务栈 = 16KB / Each task stack = 16KB
+  
   · 每核心 64 个任务 = 64 × 16KB = 1MB / 64 tasks per core = 64 × 16KB = 1MB
+  
   · 256 核心 = 256 × 1MB = 256MB / 256 cores = 256 × 1MB = 256MB
+  
   · 加上 AP_STACKS、BITMAP、HEAP 等，总计 > 260MB / Including AP_STACKS, BITMAP, HEAP, etc., the total is over 260MB
+  
   **OVMF 加载 PE 文件时，必须预留整个 SizeOfImage 的虚拟地址空间。260MB 超过了固件启动阶段的可用内存，导致 Out of Resources。**
   **When OVMF loads a PE file, it must reserve the entire virtual address space of SizeOfImage. 260MB exceeds the available memory during the firmware boot stage, causing an Out of Resources error.**
+  
   **把 STACK_SIZE 从 16KB 改成 8KB，每核心任务池从 1MB 降到 512KB，总静态数据大幅减小，PE 文件才能被 OVMF 加载。**
   **Change STACK_SIZE from 16KB to 8KB, reduce each core task pool from 1MB to 512KB, and the total static data will shrink a lot so that the PE file can be loaded by OVMF.**
 
