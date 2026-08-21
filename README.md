@@ -52,15 +52,24 @@ At the same time, the framework achieves philosophical purification of thought e
 
 ## 项目状态 / Project Status
 
-**⚠️ 本操作系统处于早期开发阶段 / ⚠️ This operating system is in an early development stage.**
+**本操作系统处于初级开发阶段 / This operating system is in the early stages of development.**
 
 - **内核核心**（内存管理、页表、调度器、能力令牌引擎、中断处理）已稳定运行在 QEMU 和实机环境中。
-- **多核支持**与**用户态切换**正在完善中。
+- **多核支持**正在完善中。
 - 完整的数学证明文档已覆盖所有核心子系统。
 
 - **Kernel core** (memory management, page tables, scheduler, capability token engine, interrupt handling) is stable on QEMU and real hardware.
-- **Multi‑core support** and **user‑mode switching** are under development.
+- **Multi‑core support** are under development.
 - Complete mathematical proof documents cover all core subsystems.
+
+---
+
+## Github设计 / Github Design
+
+- **main**分支在于此操作系统实现可装机后发布ISO镜像，不为贡献对象
+- The **main** branch is about releasing an installable ISO image of this operating system, not intended for contributions
+- **其他分支**可贡献， 因为目前处于开发操作系统中
+- **Other branches** can contribute, because currently it's under operating system development
 
 ---
 
@@ -68,9 +77,9 @@ At the same time, the framework achieves philosophical purification of thought e
 
 ### 🔒 内核 / The Kernel
 
-**内核本身由项目创始人独立编写与维护，不接受外部贡献。**
+**内核本身由项目创始人独立编写与维护，任何人可以提出建议，但建议由BDFL决定**
 
-The kernel itself is written and maintained exclusively by the project founder. **External contributions to the kernel are not accepted.**
+**The kernel itself is independently written and maintained by the project founder. Anyone can make suggestions, but the final call on suggestions is up to the BDFL.**
 
 ### 🧩 非内核功能 / Non‑Kernel Functionality
 
