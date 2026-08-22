@@ -219,8 +219,9 @@ At the same time, the framework achieves philosophical purification of thought e
 
 ## Github设计 / Github Design
 
-- **main**分支在于此操作系统实现可装机后发布ISO镜像，不为贡献对象
-- The **main** branch is about releasing an installable ISO image of this operating system, not intended for contributions
+- **main分支在于此操作系统实现可装机后发布ISO镜像，不为贡献对象**
+- **The main branch is about releasing an installable ISO image of this operating system, not intended for contributions**
+
 - **其他分支**可贡献， 因为目前处于开发操作系统中
 - **Other branches** can contribute, because currently it's under operating system development
 
@@ -248,9 +249,9 @@ Anyone is welcome to contribute **non‑kernel functionality**, for example:
 - 图形服务 / Graphics services
 - WASI 兼容层 / WASI compatibility layer
 
-这些贡献请通过 **分支（branch）** 提交，主分支仅保留内核核心代码。
+这些贡献请通过 **分支（branch）** 提交，**主分支只保留可装机的ISO镜像**，但是目前正在制造中。
 
-Please submit these contributions via **branches**. The main branch only contains the kernel core code.
+Please submit these contributions via **branches**. **Only bootable ISO images are retained in the main branch**，But it is currently under production.
 
 ---
 
