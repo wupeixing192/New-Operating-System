@@ -295,3 +295,5 @@ This software is provided "as is", without warranty of any kind. The author is n
 - **MPK Shadow Wall**: Using Intel MPK hardware features to provide hardware-level isolation fallback for unsafe C code, preventing memory overruns.
 
 ## 2026新型操作系统开发团队 / New Operating System Development Team
+
+## 为民用而生 / Born for the people
