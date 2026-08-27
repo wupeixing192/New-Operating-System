@@ -154,6 +154,8 @@ The project uses hierarchical key management:
 - Ubuntu 24.04 (or other Linux distribution)
 - Rust 工具链（nightly 版本，因使用 `#![no_std]` 和 `bootloader_api`）  
 - Rust toolchain (nightly, due to `#![no_std]` and `bootloader_api`)
+- gcc工具
+- gcc Tool
 - QEMU 系统模拟器  
 - QEMU system emulator
 - OVMF UEFI 固件  
