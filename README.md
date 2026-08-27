@@ -8,8 +8,6 @@ New Von Neumann Kernel
 ---
 
 ### 当前内核版本：v1.0
-> 用新架构定义了一个新宇宙。  
-> Define a universe with a new architecture.
 
 ---
 
