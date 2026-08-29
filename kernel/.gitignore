@@ -1,0 +1,24 @@
+# Rust 编译产物
+target/
+Cargo.lock
+
+# UEFI / 裸机生成
+*.efi
+*.iso
+*.img
+*.vmdk
+*.qcow2
+*.log
+
+# 编辑器 / 系统垃圾
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
+
+# 虚拟内存 / 临时文件
+*.vmem
+*.vmss
+*.nvram

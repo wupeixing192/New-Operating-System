@@ -8,6 +8,7 @@ use uefi::table::{Boot, SystemTable};  // 引入 UEFI 系统表类型（分为�
 use uefi::table::boot::MemoryType;  // 引入 UEFI 引导服务中的内存类型枚举，用于内存分配
 use uefi::Status;  // 引入 UEFI 状态码类型，表示操作结果
 use uefi::mem::memory_map::MemoryMap;  // 引入 UEFI 内存映射结构体，用于获取系统内存布局
+use uefi::mem::memory_map::MemoryMapOwned;
 use uart_16550::SerialPort;  // 引入 16550 串口驱动，用于内核调试输出
 use core::panic::PanicInfo;  // 引入核心库中的 panic 信息类型，用于定义 panic 处理函数
 use core::fmt::Write;  // 引入核心库中的格式化写入 trait，用于向串口输出字符串
@@ -29,6 +30,7 @@ use x86_64::registers::model_specific::Msr;  // 引入模型特定寄存器 MSR 
 use core::sync::atomic::{AtomicU64, AtomicU8};  // 引入 64 位和 8 位原子类型，用于精细计数
 use core::marker::PhantomData;  // 引入 PhantomData，用于在零大小类型中标记泛型参数
 use core::arch::global_asm;  // 引入全局汇编宏，用于嵌入纯汇编代码
+use core::arch::asm;
 
 // 导入外部独立程序
 use a_software::task_a_wrapper;  //外部程序a
@@ -64,11 +66,12 @@ pub const MAX_PHYS_MEM_GB: usize = 64;  // 系统支持的最大物理内存为 
 pub const MAX_PHYS_MEM_PAGES: usize = MAX_PHYS_MEM_GB * 1024 * 1024 * 1024 / 4096;  // 计算 4 GB 物理内存对应的 4 KiB 页帧总数
 pub const BITMAP_LEN: usize = MAX_PHYS_MEM_PAGES / 64;  // 位图数组的长度：每 64 个页帧对应一个 u64 位（每个位表示一页）
 pub const HIGH_BASE: u64 = 0xffff_8880_0000_0000; // 非恒等映射的基址：所有物理地址将映射到 HIGH_BASE + phys_addr 的虚拟地址
-static mut BITMAP: [u64; BITMAP_LEN] = [0; BITMAP_LEN];  // 物理页帧分配位图，每个 bit 表示对应页帧是否已分配（1=已分配，0=空闲）
+static BITMAP: [AtomicU64; BITMAP_LEN] = [const { AtomicU64::new(u64::MAX) }; BITMAP_LEN];  // alloc_page 里用 CAS 循环代替直接位操作
 static NEXT_FRAME: AtomicUsize = AtomicUsize::new(0);  // 下一次分配时开始搜索的位图位置，用于提高分配效率（原子操作，多核安全）
 static DEBUG_SERIAL: Mutex<SerialPort> = Mutex::new(unsafe { SerialPort::new(0x3F8) });  // 调试串口设备（COM1，基址 0x3F8），用互斥锁保护并发输出
 static TOKEN_MANAGER: Mutex<TokenManager> = Mutex::new(TokenManager::new());  // 全局令牌管理器实例，用自旋锁包装实现多核安全访问
 static mut GLOBAL_SALT: u64 = 0;  // 全局盐值，用于生成令牌的 auth_hash，确保令牌不可伪造
+static ALLOC_LOCK: spin::Mutex<()> = spin::Mutex::new(());
 
 // 定义一个宏，用于输出绿色“[  OK  ]”成功状态信息，带换行
 macro_rules! status_ok {
@@ -144,53 +147,110 @@ pub unsafe fn init_allocator(memory_map: &uefi::mem::memory_map::MemoryMapOwned)
             // 4. 填空：根据 is_free 标记位图。如果空闲则清0，占用则置1
             if is_free {
                 // 写清除位的代码（提示：用 ! 和 & 操作）
-                BITMAP[idx] &= !(1 << bit); // 将该位清 0，表示该页帧空闲可用
+                BITMAP[idx].fetch_and(!(1 << bit), Ordering::AcqRel);
             } else {
                 // 写设置位的代码（提示：用 | 操作）
-                BITMAP[idx] |= 1 << bit; // 将该位置 1，表示该页帧已被占用（如内核、ACPI、保留等）
+                BITMAP[idx].fetch_or(1 << bit, Ordering::AcqRel);
             }
         }
     }
 }
 
-pub unsafe fn alloc_page() -> Option<u64> {
-    // 1. 从 NEXT_FRAME 获取当前搜索位置（原子加载，Acquire 保证后续读操作不会重排到加载之前）
-    let start = NEXT_FRAME.load(Ordering::Acquire);
-    let mut idx = start; // idx 为当前检查的位图数组下标
+/// 从 UEFI 内存映射初始化物理内存位图
+/// 将 CONVENTIONAL 类型的区域标记为空闲（bit=0），其他保留。
+/// 从 UEFI 内存映射初始化物理内存位图
+unsafe fn init_allocator_from_uefi_map(map: &uefi::mem::memory_map::MemoryMapOwned) {
+    // 1. 全部置 1（占用）
+    for i in 0..BITMAP_LEN {
+        BITMAP[i].store(u64::MAX, Ordering::Release);
+    }
 
-    loop {
-        // 2. 如果扫到了数组末尾，回到 0 继续（循环查找）
-        if idx >= BITMAP_LEN {
-            idx = 0; // 回绕到数组开头
-        }
-
-        let word = &mut BITMAP[idx]; // 获取当前数组元素的独占引用（可变）
-
-        // 3. 如果这个 u64 没有完全被占满（即不是 u64::MAX），说明其中至少有一个空闲位
-        if *word != u64::MAX {
-            // 4. 循环 0~63，找到一个等于 0 的 bit 位（即空闲页帧）
-            for bit in 0..64 {
-                if (*word & (1 << bit)) == 0 {
-                    // 5. 找到空位了！立刻把它置为 1（占用）
-                    *word |= 1 << bit; // 原子修改？注意这里没有用原子操作，但因为有锁或单核假设？此处仅为演示
-
-                    // 6. 更新 NEXT_FRAME 指针，保证下次不用从头扫（Release 使写入对其他 CPU 可见）
-                    NEXT_FRAME.store(idx, Ordering::Release);
-
-                    // 7. 算出物理地址并返回：帧号 * 4096
-                    let frame_num = (idx * 64 + bit as usize) as u64; // 计算帧号：数组下标*64 + 位索引
-                    return Some(frame_num * 4096); // 返回物理页起始地址（字节）
+    // 2. 遍历描述符，将 CONVENTIONAL 区域清 0（空闲）
+    for desc in map.entries() {
+        if desc.ty == MemoryType::CONVENTIONAL {
+            let start_frame = desc.phys_start / 4096;
+            let page_count = desc.page_count;
+            for offset in 0..page_count {
+                let frame = start_frame + offset;
+                if frame >= MAX_PHYS_MEM_PAGES as u64 {
+                    break;
                 }
+                let idx = (frame / 64) as usize;
+                let bit = (frame % 64) as u32;
+                BITMAP[idx].fetch_and(!(1 << bit), Ordering::AcqRel);
             }
         }
+    }
+}
 
-        idx += 1; // 检查下一个 u64 数组元素
-        // 8. 如果绕了一圈回到了起点，说明内存用光了，返回 None
+/// 后备位图：仅暴露 1MB ~ 2MB 安全区域
+unsafe fn init_fallback_bitmap() {
+    // 全部置 1（占用）
+    for i in 0..BITMAP_LEN {
+        BITMAP[i].store(u64::MAX, Ordering::Release);
+    }
+
+    // 释放 1MB 到 MAX_PHYS_MEM_PAGES 覆盖的所有帧
+    let start_frame = 0x100000 / 4096;          // 1MB
+    let end_frame = MAX_PHYS_MEM_PAGES as u64;  // 最大支持帧数
+    for frame in start_frame..end_frame {
+        let idx = (frame / 64) as usize;
+        let bit = (frame % 64) as u32;
+        BITMAP[idx].fetch_and(!(1 << bit), Ordering::AcqRel);
+    }
+}
+
+pub unsafe fn alloc_pages(count: usize) -> Option<u64> {
+    if count == 0 {
+        return None;
+    }
+    let _lock = ALLOC_LOCK.lock(); // 获取全局锁，保证多核互斥
+
+    let start = NEXT_FRAME.load(Ordering::Acquire);
+    let mut idx = start;
+    let mut consecutive = 0;
+    let mut first_frame = 0;
+
+    loop {
+        if idx >= BITMAP_LEN {
+            idx = 0;
+        }
+        let word = BITMAP[idx].load(Ordering::Acquire);
+        if word != u64::MAX {
+            for bit in 0..64 {
+                if (word & (1 << bit)) == 0 {
+                    if consecutive == 0 {
+                        first_frame = idx * 64 + bit;
+                    }
+                    consecutive += 1;
+                    if consecutive == count {
+                        // 找到足够的连续页，占用它们
+                        for i in 0..count {
+                            let f = first_frame + i;
+                            let idx2 = (f / 64) as usize;
+                            let bit2 = (f % 64) as u32;
+                            BITMAP[idx2].fetch_or(1 << bit2, Ordering::Release);
+                        }
+                        NEXT_FRAME.store(idx, Ordering::Release);
+                        return Some((first_frame * 4096) as u64);
+                    }
+                } else {
+                    consecutive = 0;
+                }
+            }
+        } else {
+            consecutive = 0;
+        }
+        idx += 1;
         if idx == start {
-            break; // 遍历完整个位图仍未找到空闲页，退出循环
+            // 遍历一圈未找到
+            return None;
         }
     }
-    None // 无可用物理页
+}
+
+pub unsafe fn alloc_page() -> Option<u64> {
+    alloc_pages(1)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -363,6 +423,7 @@ impl TokenManager {
         }
     }
 
+    // compute_auth_hash 不变（无需 self）
     // compute_auth_hash 不变（无需 self）
     fn compute_auth_hash(owner: u64, perms: u8, obj_idx: usize, id: u64) -> u64 {
         // 注意：GLOBAL_SALT 现在是启动时初始化的静态变量，但在 const 上下文中不能用 unsafe
@@ -563,17 +624,9 @@ static EVENT_QUEUE: AtomicQueue = AtomicQueue::const_new(); // 全局事件队�
 
 // --- 任务核心（使用稳定的 MaybeUninit + 数组指针初始化） ---
 
-#[repr(C)] // 保持与汇编代码的布局一致，确保偏移量正确
+#[repr(C)]
 pub struct TaskContext {
-    pub r15: u64,
-    pub r14: u64,
-    pub r13: u64,
-    pub r12: u64,
-    pub rsi: u64, // 新增，保存调用者保存的寄存器
-    pub rdi: u64, // 新增
-    pub rbx: u64,
-    pub rbp: u64,
-    pub rsp: u64, // 偏移 64（最后一个字段，便于汇编直接按偏移访问）
+    pub rsp: u64,  // 只存栈指针，其他寄存器在栈上保存
 }
 
 pub struct Task {
@@ -611,9 +664,8 @@ pub struct PerCoreData {
     pub task_count: AtomicUsize, // 该核心当前活跃任务的数量
     pub scheduler_ctx: MaybeUninit<TaskContext>, // 调度器自身上下文（用于切换）
 }
-static mut CORE_DATA: [MaybeUninit<PerCoreData>; MAX_CORES] = [const {
-    MaybeUninit::uninit()
-}; MAX_CORES]; // 每个核心的数据，MAX_CORES 应在全局定义
+
+static mut CORE_DATA: [*mut PerCoreData; MAX_CORES] = [core::ptr::null_mut(); MAX_CORES]; // 每个核心的数据，MAX_CORES 应在全局定义
 
 static NEXT_TASK_ID: AtomicU64 = AtomicU64::new(1); // 全局任务 ID 分配器
 
@@ -622,55 +674,38 @@ static NEXT_TASK_ID: AtomicU64 = AtomicU64::new(1); // 全局任务 ID 分配器
 /// 在指定核心创建一个新任务，并返回该任务唯一的【初始能力令牌】
 /// 入口参数：core_id (目标核心编号), entry (任务入口函数)
 pub fn add_task(core_id: usize, entry: fn() -> !) -> Option<u64> {
-    let mut serial = unsafe {
-        SerialPort::new(0x3F8)
-    };
+    let mut serial = unsafe { SerialPort::new(0x3F8) };
     serial.init();
     let _ = write!(serial, "add_task called for core {}\n", core_id);
 
-    let core = unsafe {
-        CORE_DATA[core_id].assume_init_mut()
-    };
+    let core = unsafe { &mut *CORE_DATA[core_id] };
 
     for i in 0..MAX_TASKS_PER_CORE {
         if core.task_pool[i].is_none() {
             let task_id = NEXT_TASK_ID.fetch_add(1, Ordering::Release);
-            // ★★★ 使用真正的令牌系统创建令牌 ★★★
-            // 参数：权限 (0b111 = 读/写/执行)，所有者 (task_id)，对象基址和长度（示例值，实际应指向有效资源）
             let init_token = TOKEN_MANAGER.lock().create(0b111, task_id, 0xDEAD_BEEF, 4096)?;
-            // 如果令牌创建失败（例如表已满），则返回 None
 
-            let task = Task::new(task_id, init_token);
-            core.task_pool[i] = Some(task); // 先放入 task_pool
+            let mut task = Task::new(task_id, init_token);
 
-            // 通过 task_pool 引用获取持久地址，初始化栈帧
-            let task_ref = core.task_pool[i].as_mut().unwrap();
-            let stack_top = task_ref.stack.as_ptr() as u64 + STACK_SIZE as u64;
-            let rsp = stack_top - 8 * 9; // 9 个 8 字节（8 个寄存器 + 返回地址）
+            // ★ 新栈帧：只压入返回地址，栈指针指向该地址
+            let stack_top = task.stack.as_ptr() as u64 + STACK_SIZE as u64;
+            let rsp = stack_top - 8; // 只留一个 8 字节给返回地址
             unsafe {
                 let ptr = rsp as *mut u64;
-                ptr.add(0).write(0);  // r15
-                ptr.add(1).write(0);  // r14
-                ptr.add(2).write(0);  // r13
-                ptr.add(3).write(0);  // r12
-                ptr.add(4).write(0);  // rsi
-                ptr.add(5).write(0);  // rdi
-                ptr.add(6).write(0);  // rbx
-                ptr.add(7).write(0);  // rbp
-                ptr.add(8).write(entry as u64); // 返回地址（任务入口函数指针）
+                ptr.write(entry as u64); // 返回地址，ret 会跳转到这里
             }
-            task_ref.ctx.write(TaskContext {
-                r15: 0, r14: 0, r13: 0, r12: 0, rsi: 0, rdi: 0, rbx: 0, rbp: 0,
-                rsp: rsp,
-            });
 
-            task_ref.state.store(TaskState::Ready as u8, Ordering::Release);
-            task_ref.active.store(true, Ordering::Release);
+            // ★ TaskContext 只存栈指针
+            task.ctx.write(TaskContext { rsp });
 
+            task.state.store(TaskState::Ready as u8, Ordering::Release);
+            task.active.store(true, Ordering::Release);
+
+            core.task_pool[i] = Some(task);
             core.task_count.fetch_add(1, Ordering::Release);
             core.scheduler_used[i].store(0, Ordering::Release);
             let _ = write!(serial, "Task added at slot {}, task_count now {}\n", i, core.task_count.load(Ordering::Acquire));
-            return Some(init_token); // 返回真正的令牌 ID
+            return Some(init_token);
         }
     }
     let _ = write!(serial, "No free task slot!\n");
@@ -679,7 +714,7 @@ pub fn add_task(core_id: usize, entry: fn() -> !) -> Option<u64> {
 
 /// 根据【令牌 ID】查找持有该令牌的任务（用于 suspend/resume/terminate）
 fn find_task_by_token(core_id: usize, token_id: u64) -> Option<&'static mut Task> {
-    let core = unsafe { CORE_DATA[core_id].assume_init_mut() };
+    let core = unsafe { &mut *CORE_DATA[core_id] };
     for slot in core.task_pool.iter_mut() {
         if let Some(task) = slot {
             if task.init_token == token_id {
@@ -740,66 +775,77 @@ pub unsafe extern "C" fn switch_to(
     new_ctx: *const TaskContext,
 ) {
     core::arch::naked_asm!(
-        "cli", // 关中断，防止切换过程中被中断干扰
-        "push rbp",
+        "cli",
+        // 保存所有通用寄存器
+        "push rax",
+        "push rcx",
+        "push rdx",
         "push rbx",
-        "push rdi",
+        "push rbp",
         "push rsi",
+        "push rdi",
+        "push r8",
+        "push r9",
+        "push r10",
+        "push r11",
         "push r12",
         "push r13",
         "push r14",
         "push r15",
-        "mov [rcx + 64], rsp",   // 保存 rsp 到 old_ctx.rsp (偏移 64，对应结构体最后一个字段)
-        "mov rsp, [rdx + 64]",   // 加载新任务的 rsp
+        // 保存栈指针到 old_ctx.rsp（偏移 64）
+        "mov [rcx], rsp",
+        "mov rsp, [rdx]",
+        // 恢复所有寄存器（逆序）
         "pop r15",
         "pop r14",
         "pop r13",
         "pop r12",
-        "pop rsi",
+        "pop r11",
+        "pop r10",
+        "pop r9",
+        "pop r8",
         "pop rdi",
-        "pop rbx",
+        "pop rsi",
         "pop rbp",
-        "sti", // 开中断（恢复响应）
-        "ret", // 返回，跳转到新任务的指令流
+        "pop rbx",
+        "pop rdx",
+        "pop rcx",
+        "pop rax",
+        "sti",
+        "ret",
     );
 }
 
 // 任务主动让出 CPU（由任务自己调用）
 #[no_mangle]
 pub extern "C" fn yield_now() {
-    let mut serial = unsafe {
-        SerialPort::new(0x3F8)
-    };
+    let mut serial = unsafe { SerialPort::new(0x3F8) };
     serial.init();
     let _ = write!(serial, "yield_now called\n");
-    let core_id = CURRENT_CORE_ID.load(Ordering::Acquire); // 获取当前核心编号
-    let core = unsafe {
-        CORE_DATA[core_id].assume_init_mut()
-    };
+    let core_id = CURRENT_CORE_ID.load(Ordering::Acquire);
+    let core = unsafe { &mut *CORE_DATA[core_id] };
     let current = core.current_task_id.load(Ordering::Acquire);
 
-    // 打印调度器上下文栈指针（调试用）
-    let scheduler_rsp = unsafe {
-        (*core.scheduler_ctx.as_ptr()).rsp
-    };
-    let _ = write!(serial, "yield_now: scheduler_ctx.rsp={:#x}\n", scheduler_rsp);
+    let used = core.scheduler_used[current].load(Ordering::Acquire) + 1;
+    core.scheduler_used[current].store(used, Ordering::Release);
 
-    let used = core.scheduler_used[current].load(Ordering::Acquire);
-    let t = core.scheduler_t.load(Ordering::Acquire);
-
-    if used >= TIME_SLICE || t >= TIME_SLICE { // 若当前任务已用尽时间片，则重置并准备切换
-        core.scheduler_used[current].store(0, Ordering::Release);
-        core.scheduler_t.store(0, Ordering::Release);
+    // ★ 关键：如果时间片未耗尽，继续运行当前任务，不切换
+    if used < TIME_SLICE {
+        let _ = write!(serial, "yield_now: time slice not exhausted, continue current task\n");
+        return; // 直接返回，继续执行当前任务
     }
+
+    // 时间片耗尽，重置计数器，切换到调度器
+    core.scheduler_used[current].store(0, Ordering::Release);
 
     let old_ctx = core.task_pool[current]
         .as_mut()
         .expect("current task should exist")
         .ctx
         .as_mut_ptr();
-    let new_ctx = core.scheduler_ctx.as_mut_ptr(); // 切换回调度器上下文
-    let _ = write!(serial, "yield_now switching\n");
-    unsafe { switch_to(old_ctx, new_ctx); } // 此处调用后，控制权转给调度器，不会再返回
+    let new_ctx = core.scheduler_ctx.as_mut_ptr();
+    let _ = write!(serial, "yield_now: switching to scheduler\n");
+    unsafe { switch_to(old_ctx, new_ctx); }
 }
 
 // 全局变量：当前运行所在的核心 ID（由每个核心自己设置）
@@ -810,7 +856,7 @@ static CURRENT_CORE_ID: AtomicUsize = AtomicUsize::new(0);
 extern "C" fn per_core_scheduler(core_id: usize) -> ! {
     CURRENT_CORE_ID.store(core_id, Ordering::Release); // 设置当前核心 ID
     let core = unsafe {
-        CORE_DATA[core_id].assume_init_mut()
+        &mut *CORE_DATA[core_id]
     };
     let mut serial = unsafe {
         SerialPort::new(0x3F8)
@@ -832,8 +878,7 @@ extern "C" fn per_core_scheduler(core_id: usize) -> ! {
 
     // 在首次切换前，初始化调度器上下文（占位）
     core.scheduler_ctx.write(TaskContext {
-        r15: 0, r14: 0, r13: 0, r12: 0, rsi: 0, rdi: 0, rbx: 0, rbp: 0,
-        rsp: 0, // 占位，第一次 switch_to 会从该结构体中加载 rsp，但实际会被覆盖
+        rsp: 0,
     });
 
     let _ = write!(serial, "Before first switch\n");
@@ -942,7 +987,7 @@ pub extern "C" fn ap_rust_main(apic_id: u32) -> ! { // 接收APIC ID作为参数
     } // 将RSP切换到该核心的专用栈
 
     let core = unsafe {
-        CORE_DATA[core_id].assume_init_mut()
+        &mut *CORE_DATA[core_id]
     }; // 获取该核心的PerCoreData可变引用（先前已初始化）
 
     unsafe {
@@ -1222,7 +1267,7 @@ extern "x86-interrupt" fn timer_handler(_stack: InterruptStackFrame) {
 
     let core_id = CURRENT_CORE_ID.load(Ordering::Acquire); // 获取当前CPU核心ID
     let core = unsafe {
-        CORE_DATA[core_id].assume_init_mut()
+        &mut *CORE_DATA[core_id]
     }; // 获取该核心的PerCoreData
     let current = core.current_task_id.load(Ordering::Acquire); // 当前正在运行的任务槽位
 
@@ -1293,20 +1338,36 @@ pub struct TokenGuard<'a> {
     _marker: PhantomData<*mut ()>,
 }
 
-impl<'a> Drop for TokenGuard<'a> {
-    fn drop(&mut self) {
-        // 注意：这里只是减少引用计数，实际 `revoke_all` 才是真正撤销
-        // 真正地释放由 TokenManager 在计数归零时自动处理
-        // 此处作为代码预留，实际实现需根据你的 TokenManager 接口调整
-        // 若 TokenManager 支持 release_token 接口则调用，否则忽略
-        // 这里假设我们只是记录日志，不做复杂操作
-        // 因为你在 `try_acquire` 中已经使用 `fetch_add` 增加了计数，
-        // 当 `TokenGuard` 离开作用域（Drop）时，应调用 `fetch_sub`。
-        // 考虑到你之前的 `try_acquire` 没有返回 `TokenGuard` 而是返回 `bool`，
-        // 这里需要修改设计使其返回 `Result<TokenGuard, &str>`。
-        // 但目前我们就按宪法规定实现接口。
+pub unsafe fn enter_user_mode(rip: u64, rsp: u64, _pkru: u32) -> ! {
+    asm!(
+    "push {ss}",
+    "push {rsp}",
+    "pushfq",
+    "push {cs}",
+    "push {rip}",
+    "iretq",
+    ss = const(0x2B),
+    cs = const(0x33),
+    rip = in(reg) rip,
+    rsp = in(reg) rsp,
+    options(noreturn)
+    );
+    // 永远不会到这里，但为了类型一致
+    loop {
+        unsafe { core::arch::asm!("hlt"); }
     }
 }
+
+//impl Drop for TokenGuard<'_> {
+    //fn drop(&mut self) {
+    //    // 减少引用计数
+    //    let new_count = self.obj.ref_count.fetch_sub(1, Ordering::Release) - 1;
+     //   if new_count == 0 {
+      //      // 释放对象
+      //      self.manager.release_object(self.object_index);
+      //  }
+    //}
+//}
 
 /// 能力门：用户态访问内核资源的唯一入口
 /// 这是一个直接函数调用，而不是系统调用。
@@ -1339,7 +1400,7 @@ pub fn use_token<'a>(
 #[no_mangle]
 pub extern "C" fn get_current_token() -> u64 {
     let core_id = CURRENT_CORE_ID.load(Ordering::Acquire);
-    let core = unsafe { CORE_DATA[core_id].assume_init_mut() };
+    let core = unsafe { &mut *CORE_DATA[core_id] };
     let current = core.current_task_id.load(Ordering::Acquire);
     if let Some(task) = &core.task_pool[current] {
         task.init_token
@@ -1459,30 +1520,58 @@ fn main(_image_handle: uefi::Handle, system_table: SystemTable<Boot>) -> Status 
     DEBUG_SERIAL.lock().init(); // 获取串口互斥锁并初始化硬件（设置波特率等）
     status_ok!("初始化串口");
 
-    // 3. 获取内存映射 (后备位图)
-    let boot_services = system_table.boot_services(); // 从系统表获取 UEFI 引导服务
-    let map_success = match boot_services.memory_map(MemoryType::CONVENTIONAL) { // 尝试获取可用内存映射
-        Ok(_map) => { true } // 成功获取，后面会使用该映射构建位图
-        Err(e) => {
-            let _ = write!(DEBUG_SERIAL.lock(), "Memory map error: {:?}, using fallback bitmap\n", e); // 出错则打印并使用后备位图
-            false
-        }
-    };
+    // 3. 获取内存映射，初始化物理内存位图
+    let boot_services = system_table.boot_services();
+    let memory_map_result = boot_services.memory_map(MemoryType::LOADER_DATA);
 
-    // 4. 建立位图
-    unsafe {
-        if map_success {
-            // (你原有的UEFI映射循环) // 此处省略，实际会遍历 UEFI 内存描述符标记空闲页
-        } else {
-            BITMAP[0] |= 1; // 后备位图：标记第0页为已占用（防止分配零页）
-            let start_frame = 0x1000 / 4096; // 从物理地址 0x1000 开始（通常可用）作为空闲起始
-            let page_count = 2 * 1024 * 1024 / 4096; // 标记 2MB 区域（约512页）为空闲（用于演示）
-            for i in 0..page_count {
-                let current_frame = start_frame + i;
-                if current_frame >= MAX_PHYS_MEM_PAGES as u64 { break; } // 防止超出位图容量
-                let idx = (current_frame / 64) as usize; // 位图数组索引
-                let bit = (current_frame % 64) as u32; // 位偏移
-                BITMAP[idx] &= !(1 << bit); // 清0，表示空闲
+    match memory_map_result {
+        Ok(map) => {
+            // === 使用 UEFI 内存映射初始化位图 ===
+            unsafe {
+                // 1. 先将所有位设为 1（全部占用）
+                for i in 0..BITMAP_LEN {
+                    BITMAP[i].store(u64::MAX, Ordering::Release);
+                }
+
+                // 2. 遍历 UEFI 内存描述符，将 CONVENTIONAL 区域标记为空闲（清 0）
+                for desc in map.entries() {
+                    if desc.ty == MemoryType::CONVENTIONAL {
+                        let start_frame = desc.phys_start / 4096;
+                        let page_count = desc.page_count;
+                        for offset in 0..page_count {
+                            let current_frame = start_frame + offset;
+                            if current_frame >= MAX_PHYS_MEM_PAGES as u64 {
+                                break;
+                            }
+                            let idx = (current_frame / 64) as usize;
+                            let bit = (current_frame % 64) as u32;
+                            BITMAP[idx].fetch_and(!(1 << bit), Ordering::AcqRel);
+                        }
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            let _ = write!(DEBUG_SERIAL.lock(), "Memory map error: {:?}, using fallback bitmap\n", e);
+            // === 后备位图（保守策略）：仅暴露 1MB ~ 2MB 区域 ===
+            unsafe {
+                // 1. 全部置 1（占用）
+                for i in 0..BITMAP_LEN {
+                    BITMAP[i].store(u64::MAX, Ordering::Release);
+                }
+
+                // 2. 只把 0x100000 ~ 0x200000（1MB ~ 2MB）标记为空闲
+                let start_frame = 0x100000 / 4096;
+                let page_count = 0x100000 / 4096;
+                for offset in 0..page_count {
+                    let current_frame = start_frame + offset;
+                    if current_frame >= MAX_PHYS_MEM_PAGES as u64 {
+                        break;
+                    }
+                    let idx = (current_frame / 64) as usize;
+                    let bit = (current_frame % 64) as u32;
+                    BITMAP[idx].fetch_and(!(1 << bit), Ordering::AcqRel);
+                }
             }
         }
     }
@@ -1535,11 +1624,25 @@ fn main(_image_handle: uefi::Handle, system_table: SystemTable<Boot>) -> Status 
                 task_count: AtomicUsize::new(0), // 初始无任务
                 scheduler_ctx: MaybeUninit::uninit(), // 调度器上下文未初始化
             };
-            CORE_DATA[core_id].write(per_core); // 写入全局 CORE_DATA 数组
+            // 计算 PerCoreData 结构体需要多少物理页
+            let size = core::mem::size_of::<PerCoreData>();
+            let num_pages = (size + 4095) / 4096; // 向上取整
+
+            // 分配连续物理页
+            let phys_start = alloc_pages(num_pages).expect("Failed to allocate PerCoreData");
+
+            // 转换为虚拟地址（加上 HIGH_BASE）
+            let virt_start = (phys_start + HIGH_BASE) as *mut PerCoreData;
+
+            // 将 per_core 数据写入动态分配的内存
+            virt_start.write(per_core);
+
+            // 存储指针到全局数组
+            CORE_DATA[core_id] = virt_start;
         }
 
         // BSP 配置（核心0）
-        let bsp_core = CORE_DATA[0].assume_init_mut(); // 获取 BSP 核心的可变引用
+        let bsp_core = unsafe { &mut *CORE_DATA[0] }; // 获取 BSP 核心的可变引用
         let ist_top = VirtAddr::from_ptr(IST_STACK.as_ptr().add(IST_STACK.len())); // IST 栈顶地址（高地址）
         init_gdt_tss_ist(&mut bsp_core.gdt, &mut bsp_core.tss, ist_top); // 初始化 BSP 的 GDT/TSS/IST
         status_ok!("BSP GDT/TSS 初始化");
