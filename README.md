@@ -257,6 +257,15 @@ The project uses hierarchical key management:
 
 ---
 
+#### 由于项目处于早期开发阶段，**所以我们的文档是最终目标，不是直接实现**：
+#### Since the project is in the early stages of development, **our documentation is the end goal, not the direct implementation**:
+
+>**BDFL声明：/BDFL statement:**
+>**能跑 > 能用 > 安全**
+>**Can run > Can use > Safe**
+
+---
+
 ## 法律声明  
 ## Legal Notice
 
