@@ -8,8 +8,8 @@
 ---
 
 ### 2026年 / 2026 Years
-- [✓] **制定架构** / Define the system architecture
-- [✓] **内核第一版** / Kernel v1
+- [x] **制定架构** / Define the system architecture
+- [x] **内核第一版** / Kernel v1
 - [ ] **键值存储第一版** *(进行中 / In progress)* / Key-value store v1
 
 ### 2027年 / 2027 Years
