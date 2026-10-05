@@ -21,6 +21,7 @@
 - [ ] **中期：桌面第一版** / Mid-year: Desktop v1
 - [ ] **下半年：外部基本设备移植兼容第一版** / H2: Basic peripheral port & compat v1
 - [ ] **年底弹性目标** *(Stretch)* / Year-end stretch goal: 提前推进2028末项 / pull forward 2028 year-end task
+- [ ] **试机** / Hardware trial / test boots
 
 ### 2028年 / 2028 Years
 
@@ -45,7 +46,6 @@
 
 - [ ] **用户个性化功能完善** / Personalization features
 - [ ] **VMware可装机** / Bootable in VMware
-- [ ] **试机** / Hardware trial / test boots
 - [ ] **实机运行软件与虚拟化** / Run apps & virtualization on bare metal
 - [ ] **实机安装并可用** *(最终目标 / Final goal)* / Install on real hardware & usable
 
