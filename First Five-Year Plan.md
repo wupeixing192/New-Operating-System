@@ -1,73 +1,54 @@
-# 第一个五年计划 / The first Five-Year Plan
+# 第一个五年计划 / The First Five-Year Plan
 
-## 本计划将在2030年前实行完毕
+> 本计划将在2030年前实行完毕 / To be completed before 2030
+> 第一版，以后每年更新 / v1, updated annually
 
-> 第一版以后每年都会更新
-> 
-> 注意：此五年计划为时间顺序
+> 注：本计划按时间顺序 / Note: arranged in chronological order
+
+---
 
 ### 2026年 / 2026 Years
-
-· 制定架构（已完成）
-
-· 中期完成内核第一版（已完成）
-
-· 年底完成键值存储第一版（正在进行中）
+- [✓] **制定架构** / Define the system architecture
+- [✓] **内核第一版** / Kernel v1
+- [ ] **键值存储第一版** *(进行中 / In progress)* / Key-value store v1
 
 ### 2027年 / 2027 Years
 
-· 内核抛弃单核，只支持多核
-
-· 年初完成电源管理第一版
-
-· 上半年完成Mesa图形驱动移植与兼容（将进行去POSIX）
-
-· 中期完成桌面第一版
-
-· 下半年完成外部基本设备移植与兼容第一版
-
-· 年底如果有时间或许提前完成2028年底任务
+- [ ] **内核抛弃单核，仅支持多核** / Drop uniprocessor; multi-core only
+- [ ] **年初：电源管理第一版** / Q1: Power management v1
+- [ ] **上半年：Mesa图形驱动移植与兼容（去POSIX）** / H1: Mesa driver port & compat (moving away from POSIX)
+- [ ] **中期：桌面第一版** / Mid-year: Desktop v1
+- [ ] **下半年：外部基本设备移植兼容第一版** / H2: Basic peripheral port & compat v1
+- [ ] **年底弹性目标** *(Stretch)* / Year-end stretch goal: 提前推进2028末项 / pull forward 2028 year-end task
 
 ### 2028年 / 2028 Years
 
-· 内核迈向x2APIC，内存支持1TB及以上
-
-· 内核迈向五级分页，但四级分页仍然支持
-
-· 文件系统转键值存储转换器第一版
-
-· 上半年移植WASI/WASM
-
-· 中期写桌面UI功能
-
-· 下半年完成看护服务第一版
-
-· 年底完成OmniBar智能交互栏第一版
+- [ ] **内核迈向x2APIC，内存支持1TB+** / Kernel moves to x2APIC, ≥1TB RAM
+- [ ] **五级分页（保留四级）** / Five-level paging (four-level retained)
+- [ ] **键值↔文件系统转换器第一版** / KV↔filesystem converter v1
+- [ ] **上半年：移植WASI/WASM** / H1: WASI/WASM port
+- [ ] **中期：桌面UI功能** / Mid-year: Desktop UI features
+- [ ] **下半年：看护服务第一版** / H2: Guardian service v1
+- [ ] **年底：OmniBar智能交互栏第一版** / Year-end: OmniBar (intelligent interaction bar) v1
 
 ### 2029年 / 2029 Years
 
-· OmniBar添加AI功能
-
-· Desmos深度集成OmniBar智能交互栏
-
-· 完善OmniBar交互栏功能
-
-· 对于虚拟功能完善与支持
-
-· 添加网络功能
-
-· 完成小组件第一版
+- [ ] **OmniBar接入AI** / OmniBar gains AI capabilities
+- [ ] **Desmos(系统生态)深度集成OmniBar** / Desmos (system ecosystem) deep-integrates OmniBar
+- [ ] **完善OmniBar交互** / Refine OmniBar interactions
+- [ ] **虚拟化能力完善** / Virtualization hardening
+- [ ] **网络功能** / Networking stack
+- [ ] **小组件第一版** / Widgets v1
 
 ### 2030年 / 2030 Years
 
-· 完善用户个性化相关功能
+- [ ] **用户个性化功能完善** / Personalization features
+- [ ] **VMware可装机** / Bootable in VMware
+- [ ] **试机** / Hardware trial / test boots
+- [ ] **实机运行软件与虚拟化** / Run apps & virtualization on bare metal
+- [ ] **实机安装并可用** *(最终目标 / Final goal)* / Install on real hardware & usable
 
-· 能够在VMware可装机
-
-· 试机
-
-· 能够在实机上跑软件与虚拟化
-
-· 能够成功安装在实机上并用起来
+---
 
 ## 新型操作系统团队 · 为民用而生
+## NewOS Team · Built for everyday people
