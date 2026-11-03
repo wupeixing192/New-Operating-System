@@ -82,6 +82,34 @@ The kernel is minimal: it only creates, verifies, and revokes capability tokens.
 
 ---
 
+## 与 Unix 的根本分歧 / The Basic Differences with Unix
+
+**这个项目不是 Unix，也不是类 Unix。它完全拒绝 POSIX 兼容。 
+This project is not Unix, nor is it Unix-like. It completely rejects POSIX compatibility.**
+
+它与 Unix 的设计分歧是根本性的：
+Its design differs from Unix in a fundamental way:
+
+| 维度 | Unix | 本项目 |
+|------|------|--------|
+| 系统调用 | syscall 表 + 编号 | IDT 向量即门，无表 |
+| 权限模型 | uid/gid + ACL | 能力令牌 |
+| 持久化 | 文件系统 | 键值存储 |
+| 地址空间 | 每进程独立页表 | 单地址空间，页表冻结 |
+| 应用格式 | ELF 原生二进制 | WASM/WASI |
+| 隔离 | MMU + 进程 | 能力令牌 + WASM 沙箱 |
+
+| Dimension | Unix | This Project |
+|-----------|------|--------------|
+| System Call | syscall table numbers | IDT vectors as gates, no table |
+| Permission Model | uid/gid ACL | Capability tokens |
+| Persistence | File system | Key-value store |
+| Address Space | Independent page table per process | Single address space, frozen page table |
+| Application Format | ELF native binaries | WASM/WASI |
+| Isolation | MMU + processes | Capability tokens + WASM sandbox |
+
+---
+
 ## 当前状态  
 ## Current Status
 
